@@ -142,7 +142,7 @@ export function useRoom(roomCode: string, playerName: string, isMaster: boolean)
     });
   }, [playerName]);
 
-  const sendRoll = useCallback((rollResult: DiceRollResult, description?: string) => {
+  const sendRoll = useCallback((rollResult: DiceRollResult, description?: string, isSecret?: boolean) => {
     if (!channelRef.current) return;
     
     const message: ChatMessage = {
@@ -153,6 +153,7 @@ export function useRoom(roomCode: string, playerName: string, isMaster: boolean)
       type: 'roll',
       timestamp: new Date().toISOString(),
       rollResult,
+      isSecret,
     };
 
     channelRef.current.send({

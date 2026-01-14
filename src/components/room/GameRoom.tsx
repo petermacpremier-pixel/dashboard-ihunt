@@ -5,6 +5,7 @@ import { ChatPanel } from './ChatPanel';
 import { PlayersList } from './PlayersList';
 import { CharacterSheetView } from './CharacterSheetView';
 import { SheetUploader } from './SheetUploader';
+import { DownloadCodeButton } from '@/components/DownloadCodeButton';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -84,6 +85,8 @@ export function GameRoom({ roomCode, password, playerName, isMaster, onLeave }: 
         </div>
 
         <div className="flex items-center gap-2">
+          <DownloadCodeButton />
+          
           <div className="hidden sm:flex items-center gap-1 text-xs text-muted-foreground">
             <Users className="w-3 h-3" />
             <span>{players.length}</span>
