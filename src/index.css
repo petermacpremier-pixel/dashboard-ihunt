@@ -52,6 +52,7 @@
     --shadow-deep: 280 40% 8%;
     --success: 120 40% 35%;
     --warning: 45 80% 50%;
+    --warning-foreground: 0 0% 10%;
     --fate-positive: 120 50% 40%;
     --fate-negative: 0 60% 45%;
     --fate-neutral: 240 10% 40%;
