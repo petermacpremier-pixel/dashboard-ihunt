@@ -1,14 +1,38 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useState } from 'react';
+import { JoinRoom } from '@/components/room/JoinRoom';
+import { GameRoom } from '@/components/room/GameRoom';
+
+interface RoomSession {
+  roomCode: string;
+  password: string;
+  playerName: string;
+  isMaster: boolean;
+}
 
 const Index = () => {
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
-      </div>
-    </div>
-  );
+  const [session, setSession] = useState<RoomSession | null>(null);
+
+  const handleJoin = (roomCode: string, password: string, playerName: string, isMaster: boolean) => {
+    setSession({ roomCode, password, playerName, isMaster });
+  };
+
+  const handleLeave = () => {
+    setSession(null);
+  };
+
+  if (session) {
+    return (
+      <GameRoom
+        roomCode={session.roomCode}
+        password={session.password}
+        playerName={session.playerName}
+        isMaster={session.isMaster}
+        onLeave={handleLeave}
+      />
+    );
+  }
+
+  return <JoinRoom onJoin={handleJoin} />;
 };
 
 export default Index;
