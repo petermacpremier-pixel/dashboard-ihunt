@@ -54,6 +54,16 @@ export interface Player {
   online_at: string;
 }
 
+export interface DiceRollResult {
+  dice: number[];
+  bonusDie?: number; // For advantage roll (d6)
+  total: number;
+  modifier: number;
+  diceType: 'fate' | 'advantage' | 'd4' | 'd6' | 'd8' | 'd10' | 'd12' | 'd20';
+  description?: string;
+  isSecret?: boolean; // Hidden roll, only visible to roller
+}
+
 export interface ChatMessage {
   id: string;
   playerId: string;
@@ -62,15 +72,7 @@ export interface ChatMessage {
   type: 'message' | 'roll' | 'system';
   timestamp: string;
   rollResult?: DiceRollResult;
-}
-
-export interface DiceRollResult {
-  dice: number[];
-  bonusDie?: number; // For advantage roll (d6)
-  total: number;
-  modifier: number;
-  diceType: 'fate' | 'advantage' | 'd4' | 'd6' | 'd8' | 'd10' | 'd12' | 'd20';
-  description?: string;
+  isSecret?: boolean; // For secret rolls
 }
 
 export interface Room {
@@ -81,6 +83,8 @@ export interface Room {
 export interface SceneInfo {
   title: string;
   description: string;
+  imageUrl?: string;
+  aspects: string[];
   pinnedBy: string;
   timestamp: string;
 }

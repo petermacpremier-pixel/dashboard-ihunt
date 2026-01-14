@@ -2,9 +2,11 @@ import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { ChatMessage, DiceRollResult, SceneInfo } from '@/types/ihunt';
 import { PinnedScene } from './PinnedScene';
-import { Send, Dice1, Dice6, Plus, Minus, Zap } from 'lucide-react';
+import { Send, Dice1, Plus, Minus, Zap, EyeOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface ChatPanelProps {
@@ -13,7 +15,7 @@ interface ChatPanelProps {
   currentPlayerName: string;
   pinnedScene: SceneInfo | null;
   onSendMessage: (content: string) => void;
-  onSendRoll: (result: DiceRollResult, description?: string) => void;
+  onSendRoll: (result: DiceRollResult, description?: string, isSecret?: boolean) => void;
   onUpdateScene: (scene: SceneInfo | null) => void;
 }
 
@@ -87,6 +89,7 @@ export function ChatPanel({ messages, currentPlayerId, currentPlayerName, pinned
   const [message, setMessage] = useState('');
   const [modifier, setModifier] = useState(0);
   const [rollDescription, setRollDescription] = useState('');
+  const [isSecretRoll, setIsSecretRoll] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -119,7 +122,8 @@ export function ChatPanel({ messages, currentPlayerId, currentPlayerName, pinned
       modifier,
       diceType: 'fate',
       description: rollDescription || undefined,
-    }, rollDescription || '4dF');
+      isSecret: isSecretRoll,
+    }, rollDescription || '4dF', isSecretRoll);
     setRollDescription('');
   };
 
@@ -142,7 +146,8 @@ export function ChatPanel({ messages, currentPlayerId, currentPlayerName, pinned
       modifier,
       diceType: 'advantage',
       description: rollDescription || undefined,
-    }, rollDescription || '3dF + 1d6 (Vantagem)');
+      isSecret: isSecretRoll,
+    }, rollDescription || '3dF + 1d6 (Vantagem)', isSecretRoll);
     setRollDescription('');
   };
 
@@ -156,9 +161,18 @@ export function ChatPanel({ messages, currentPlayerId, currentPlayerName, pinned
       modifier,
       diceType: `d${sides}` as any,
       description: rollDescription || undefined,
-    }, rollDescription || `${count}d${sides}`);
+      isSecret: isSecretRoll,
+    }, rollDescription || `${count}d${sides}`, isSecretRoll);
     setRollDescription('');
   };
+
+  // Filter messages - hide secret rolls from other players
+  const visibleMessages = messages.filter(msg => {
+    if (msg.isSecret && msg.playerId !== currentPlayerId) {
+      return false;
+    }
+    return true;
+  });
 
   return (
     <div className="flex flex-col h-full">
@@ -172,12 +186,12 @@ export function ChatPanel({ messages, currentPlayerId, currentPlayerName, pinned
       {/* Messages */}
       <ScrollArea className="flex-1 p-4" ref={scrollRef}>
         <div className="space-y-3">
-          {messages.length === 0 && (
+          {visibleMessages.length === 0 && (
             <div className="text-center text-muted-foreground text-sm py-8">
               Nenhuma mensagem ainda. Comece a conversar!
             </div>
           )}
-          {messages.map((msg) => (
+          {visibleMessages.map((msg) => (
             <div
               key={msg.id}
               className={cn(
@@ -185,12 +199,19 @@ export function ChatPanel({ messages, currentPlayerId, currentPlayerName, pinned
                 msg.type === 'system' && 'bg-muted/50 text-center text-sm text-muted-foreground italic',
                 msg.type === 'message' && msg.playerId === currentPlayerId && 'bg-primary/20 ml-8',
                 msg.type === 'message' && msg.playerId !== currentPlayerId && 'bg-muted mr-8',
-                msg.type === 'roll' && 'bg-secondary/50 border border-primary/30'
+                msg.type === 'roll' && !msg.isSecret && 'bg-secondary/50 border border-primary/30',
+                msg.type === 'roll' && msg.isSecret && 'bg-muted/80 border border-dashed border-muted-foreground/30'
               )}
             >
               {msg.type !== 'system' && (
                 <div className="flex items-center gap-2 mb-1">
                   <span className="font-semibold text-sm text-primary">{msg.playerName}</span>
+                  {msg.isSecret && (
+                    <span className="flex items-center gap-1 text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                      <EyeOff className="w-3 h-3" />
+                      secreto
+                    </span>
+                  )}
                   <span className="text-xs text-muted-foreground">
                     {new Date(msg.timestamp).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                   </span>
@@ -242,36 +263,50 @@ export function ChatPanel({ messages, currentPlayerId, currentPlayerName, pinned
               </Button>
             </div>
           </div>
-          
-          <div className="flex gap-1 flex-wrap">
-            <Button
-              variant="default"
-              size="sm"
-              onClick={rollFate}
-              className="gap-1"
-            >
-              <Dice1 className="w-4 h-4" />
-              4dF
-            </Button>
-            <Button
-              variant="default"
-              size="sm"
-              onClick={rollAdvantage}
-              className="gap-1 bg-warning hover:bg-warning/90 text-warning-foreground"
-            >
-              <Zap className="w-4 h-4" />
-              Vantagem
-            </Button>
-            {[4, 6, 8, 10, 12, 20].map(sides => (
+
+          <div className="flex items-center justify-between">
+            <div className="flex gap-1 flex-wrap">
               <Button
-                key={sides}
-                variant="outline"
+                variant="default"
                 size="sm"
-                onClick={() => rollDice(sides)}
+                onClick={rollFate}
+                className="gap-1"
               >
-                d{sides}
+                <Dice1 className="w-4 h-4" />
+                4dF
               </Button>
-            ))}
+              <Button
+                variant="default"
+                size="sm"
+                onClick={rollAdvantage}
+                className="gap-1 bg-warning hover:bg-warning/90 text-warning-foreground"
+              >
+                <Zap className="w-4 h-4" />
+                Vantagem
+              </Button>
+              {[4, 6, 8, 10, 12, 20].map(sides => (
+                <Button
+                  key={sides}
+                  variant="outline"
+                  size="sm"
+                  onClick={() => rollDice(sides)}
+                >
+                  d{sides}
+                </Button>
+              ))}
+            </div>
+            
+            <div className="flex items-center gap-2 ml-2">
+              <Switch
+                id="secret-roll"
+                checked={isSecretRoll}
+                onCheckedChange={setIsSecretRoll}
+              />
+              <Label htmlFor="secret-roll" className="text-xs flex items-center gap-1 cursor-pointer">
+                <EyeOff className="w-3 h-3" />
+                <span className="hidden sm:inline">Secreto</span>
+              </Label>
+            </div>
           </div>
         </div>
       </div>
