@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Player, ChatMessage, CharacterSheet, DiceRollResult } from '@/types/ihunt';
+import { Player, ChatMessage, CharacterSheet, DiceRollResult, SceneInfo } from '@/types/ihunt';
 
 interface RoomState {
   players: Player[];
   messages: ChatMessage[];
+  pinnedScene: SceneInfo | null;
   isConnected: boolean;
 }
 
@@ -12,6 +13,7 @@ export function useRoom(roomCode: string, playerName: string, isMaster: boolean)
   const [state, setState] = useState<RoomState>({
     players: [],
     messages: [],
+    pinnedScene: null,
     isConnected: false,
   });
   
@@ -64,6 +66,15 @@ export function useRoom(roomCode: string, playerName: string, isMaster: boolean)
         players: prev.players.map(p => 
           p.id === playerId ? { ...p, sheet } : p
         ),
+      }));
+    });
+
+    // Handle scene updates
+    channel.on('broadcast', { event: 'scene_update' }, ({ payload }) => {
+      const scene = payload as SceneInfo | null;
+      setState(prev => ({
+        ...prev,
+        pinnedScene: scene,
       }));
     });
 
@@ -174,11 +185,42 @@ export function useRoom(roomCode: string, playerName: string, isMaster: boolean)
     });
   }, [playerName, isMaster]);
 
+  const updateScene = useCallback((scene: SceneInfo | null) => {
+    if (!channelRef.current) return;
+
+    // Update local state immediately
+    setState(prev => ({ ...prev, pinnedScene: scene }));
+
+    // Broadcast scene update
+    channelRef.current.send({
+      type: 'broadcast',
+      event: 'scene_update',
+      payload: scene,
+    });
+
+    // Send system message about scene change
+    if (scene) {
+      channelRef.current.send({
+        type: 'broadcast',
+        event: 'chat',
+        payload: {
+          id: crypto.randomUUID(),
+          playerId: 'system',
+          playerName: 'Sistema',
+          content: `🎬 Nova cena: ${scene.title}`,
+          type: 'system',
+          timestamp: new Date().toISOString(),
+        },
+      });
+    }
+  }, []);
+
   return {
     ...state,
     playerId: playerIdRef.current,
     sendMessage,
     sendRoll,
     updateSheet,
+    updateScene,
   };
 }

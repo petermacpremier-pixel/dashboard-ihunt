@@ -2,15 +2,19 @@ import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { ChatMessage, DiceRollResult } from '@/types/ihunt';
+import { ChatMessage, DiceRollResult, SceneInfo } from '@/types/ihunt';
+import { PinnedScene } from './PinnedScene';
 import { Send, Dice1, Dice6, Plus, Minus, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface ChatPanelProps {
   messages: ChatMessage[];
   currentPlayerId: string;
+  currentPlayerName: string;
+  pinnedScene: SceneInfo | null;
   onSendMessage: (content: string) => void;
   onSendRoll: (result: DiceRollResult, description?: string) => void;
+  onUpdateScene: (scene: SceneInfo | null) => void;
 }
 
 function FateDie({ value }: { value: number }) {
@@ -79,7 +83,7 @@ function RollDisplay({ result }: { result: DiceRollResult }) {
   );
 }
 
-export function ChatPanel({ messages, currentPlayerId, onSendMessage, onSendRoll }: ChatPanelProps) {
+export function ChatPanel({ messages, currentPlayerId, currentPlayerName, pinnedScene, onSendMessage, onSendRoll, onUpdateScene }: ChatPanelProps) {
   const [message, setMessage] = useState('');
   const [modifier, setModifier] = useState(0);
   const [rollDescription, setRollDescription] = useState('');
@@ -158,6 +162,13 @@ export function ChatPanel({ messages, currentPlayerId, onSendMessage, onSendRoll
 
   return (
     <div className="flex flex-col h-full">
+      {/* Pinned Scene */}
+      <PinnedScene
+        scene={pinnedScene}
+        onUpdateScene={onUpdateScene}
+        currentPlayerName={currentPlayerName}
+      />
+
       {/* Messages */}
       <ScrollArea className="flex-1 p-4" ref={scrollRef}>
         <div className="space-y-3">

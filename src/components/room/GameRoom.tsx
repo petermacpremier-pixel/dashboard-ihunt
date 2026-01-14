@@ -29,7 +29,7 @@ interface GameRoomProps {
 }
 
 export function GameRoom({ roomCode, password, playerName, isMaster, onLeave }: GameRoomProps) {
-  const { players, messages, isConnected, playerId, sendMessage, sendRoll, updateSheet } = useRoom(
+  const { players, messages, pinnedScene, isConnected, playerId, sendMessage, sendRoll, updateSheet, updateScene } = useRoom(
     roomCode,
     playerName,
     isMaster
@@ -138,8 +138,11 @@ export function GameRoom({ roomCode, password, playerName, isMaster, onLeave }: 
             <ChatPanel 
               messages={messages}
               currentPlayerId={playerId}
+              currentPlayerName={playerName}
+              pinnedScene={pinnedScene}
               onSendMessage={sendMessage}
               onSendRoll={sendRoll}
+              onUpdateScene={updateScene}
             />
           </div>
 
@@ -180,8 +183,11 @@ export function GameRoom({ roomCode, password, playerName, isMaster, onLeave }: 
                 <ChatPanel 
                   messages={messages}
                   currentPlayerId={playerId}
+                  currentPlayerName={playerName}
+                  pinnedScene={pinnedScene}
                   onSendMessage={sendMessage}
                   onSendRoll={sendRoll}
+                  onUpdateScene={updateScene}
                 />
               </TabsContent>
               
