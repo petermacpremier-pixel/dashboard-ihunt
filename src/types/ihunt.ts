@@ -77,3 +77,10 @@ export interface Room {
   code: string;
   password: string;
 }
+
+export interface SceneInfo {
+  title: string;
+  description: string;
+  pinnedBy: string;
+  timestamp: string;
+}
