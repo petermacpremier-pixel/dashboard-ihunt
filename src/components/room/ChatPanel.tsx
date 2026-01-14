@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ChatMessage, DiceRollResult } from '@/types/ihunt';
-import { Send, Dice1, Plus, Minus } from 'lucide-react';
+import { Send, Dice1, Dice6, Plus, Minus, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface ChatPanelProps {
@@ -20,26 +20,46 @@ function FateDie({ value }: { value: number }) {
 }
 
 function RollDisplay({ result }: { result: DiceRollResult }) {
-  if (result.diceType === 'fate') {
-    const total = result.total + result.modifier;
+  if (result.diceType === 'fate' || result.diceType === 'advantage') {
+    const fateTotal = result.dice.reduce((a, b) => a + b, 0);
+    const bonusValue = result.bonusDie || 0;
+    const finalTotal = fateTotal + bonusValue + result.modifier;
+    
     return (
       <div className="space-y-2">
-        <div className="flex gap-1 flex-wrap">
+        <div className="flex gap-1 flex-wrap items-center">
           {result.dice.map((die, i) => (
             <FateDie key={i} value={die} />
           ))}
+          {result.bonusDie !== undefined && (
+            <>
+              <span className="text-muted-foreground mx-1">+</span>
+              <span className="w-8 h-8 rounded bg-warning/20 border border-warning flex items-center justify-center font-bold text-warning">
+                {result.bonusDie}
+              </span>
+            </>
+          )}
         </div>
         <div className="text-sm text-muted-foreground">
-          Resultado: {result.total} 
-          {result.modifier !== 0 && (
-            <span> {result.modifier > 0 ? '+' : ''}{result.modifier} = <strong className="text-foreground">{total}</strong></span>
+          {result.diceType === 'advantage' ? (
+            <span>
+              Fate: {fateTotal} + d6: {bonusValue}
+              {result.modifier !== 0 && <span> {result.modifier > 0 ? '+' : ''}{result.modifier}</span>}
+              {' = '}<strong className="text-foreground">{finalTotal}</strong>
+            </span>
+          ) : (
+            <span>
+              Resultado: {fateTotal}
+              {result.modifier !== 0 && <span> {result.modifier > 0 ? '+' : ''}{result.modifier}</span>}
+              {' = '}<strong className="text-foreground">{fateTotal + result.modifier}</strong>
+            </span>
           )}
-          {result.modifier === 0 && <span> = <strong className="text-foreground">{result.total}</strong></span>}
         </div>
       </div>
     );
   }
 
+  const diceTotal = result.dice.reduce((a, b) => a + b, 0);
   return (
     <div className="space-y-2">
       <div className="flex gap-2 flex-wrap">
@@ -50,7 +70,7 @@ function RollDisplay({ result }: { result: DiceRollResult }) {
         ))}
       </div>
       <div className="text-sm text-muted-foreground">
-        Total: {result.dice.reduce((a, b) => a + b, 0)}
+        Total: {diceTotal}
         {result.modifier !== 0 && (
           <span> {result.modifier > 0 ? '+' : ''}{result.modifier} = <strong className="text-foreground">{result.total}</strong></span>
         )}
@@ -79,6 +99,7 @@ export function ChatPanel({ messages, currentPlayerId, onSendMessage, onSendRoll
     }
   };
 
+  // Roll 4dF (standard Fate roll)
   const rollFate = () => {
     const dice = Array(4).fill(0).map(() => {
       const roll = Math.random();
@@ -86,7 +107,7 @@ export function ChatPanel({ messages, currentPlayerId, onSendMessage, onSendRoll
       if (roll < 2/3) return 0;
       return 1;
     });
-    const total = dice.reduce((a, b) => a + b, 0);
+    const total = dice.reduce((a, b) => a + b, 0) + modifier;
     
     onSendRoll({
       dice,
@@ -95,6 +116,29 @@ export function ChatPanel({ messages, currentPlayerId, onSendMessage, onSendRoll
       diceType: 'fate',
       description: rollDescription || undefined,
     }, rollDescription || '4dF');
+    setRollDescription('');
+  };
+
+  // Roll 3dF + 1d6 (Advantage roll)
+  const rollAdvantage = () => {
+    const fateDice = Array(3).fill(0).map(() => {
+      const roll = Math.random();
+      if (roll < 1/3) return -1;
+      if (roll < 2/3) return 0;
+      return 1;
+    });
+    const bonusDie = Math.floor(Math.random() * 6) + 1;
+    const fateTotal = fateDice.reduce((a, b) => a + b, 0);
+    const total = fateTotal + bonusDie + modifier;
+    
+    onSendRoll({
+      dice: fateDice,
+      bonusDie,
+      total,
+      modifier,
+      diceType: 'advantage',
+      description: rollDescription || undefined,
+    }, rollDescription || '3dF + 1d6 (Vantagem)');
     setRollDescription('');
   };
 
@@ -117,6 +161,11 @@ export function ChatPanel({ messages, currentPlayerId, onSendMessage, onSendRoll
       {/* Messages */}
       <ScrollArea className="flex-1 p-4" ref={scrollRef}>
         <div className="space-y-3">
+          {messages.length === 0 && (
+            <div className="text-center text-muted-foreground text-sm py-8">
+              Nenhuma mensagem ainda. Comece a conversar!
+            </div>
+          )}
           {messages.map((msg) => (
             <div
               key={msg.id}
@@ -192,6 +241,15 @@ export function ChatPanel({ messages, currentPlayerId, onSendMessage, onSendRoll
             >
               <Dice1 className="w-4 h-4" />
               4dF
+            </Button>
+            <Button
+              variant="default"
+              size="sm"
+              onClick={rollAdvantage}
+              className="gap-1 bg-warning hover:bg-warning/90 text-warning-foreground"
+            >
+              <Zap className="w-4 h-4" />
+              Vantagem
             </Button>
             {[4, 6, 8, 10, 12, 20].map(sides => (
               <Button

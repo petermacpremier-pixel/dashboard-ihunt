@@ -62,7 +62,10 @@ export default {
         shadow: "hsl(var(--shadow))",
         "shadow-deep": "hsl(var(--shadow-deep))",
         success: "hsl(var(--success))",
-        warning: "hsl(var(--warning))",
+        warning: {
+          DEFAULT: "hsl(var(--warning))",
+          foreground: "hsl(var(--warning-foreground))",
+        },
         "fate-positive": "hsl(var(--fate-positive))",
         "fate-negative": "hsl(var(--fate-negative))",
         "fate-neutral": "hsl(var(--fate-neutral))",

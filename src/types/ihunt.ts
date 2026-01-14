@@ -10,9 +10,9 @@ export interface Habilidade {
 }
 
 export interface Manobra {
+  id: string;
   nome: string;
-  descricao: string;
-  ativa: boolean;
+  descricao?: string;
 }
 
 export interface Consequencia {
@@ -21,19 +21,21 @@ export interface Consequencia {
 }
 
 export interface Dom {
+  id: string;
   nome: string;
   descricao: string;
+  categoria?: string;
+  custo_essencia?: number;
+  nivel?: number;
 }
 
 export interface CharacterSheet {
   nome: string;
-  conceito?: string;
-  drama?: string;
-  trampo?: string;
-  sonhos?: string;
+  drive?: string;
   aspectos: Aspecto[];
   habilidades: Habilidade[];
   manobras: Manobra[];
+  manobras_habilidade: Manobra[];
   stress_fisico: boolean[];
   stress_mental: boolean[];
   consequencias: Consequencia[];
@@ -64,9 +66,10 @@ export interface ChatMessage {
 
 export interface DiceRollResult {
   dice: number[];
+  bonusDie?: number; // For advantage roll (d6)
   total: number;
   modifier: number;
-  diceType: 'fate' | 'd4' | 'd6' | 'd8' | 'd10' | 'd12' | 'd20';
+  diceType: 'fate' | 'advantage' | 'd4' | 'd6' | 'd8' | 'd10' | 'd12' | 'd20';
   description?: string;
 }
 

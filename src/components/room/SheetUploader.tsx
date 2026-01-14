@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { CharacterSheet } from '@/types/ihunt';
+import { CharacterSheet, Aspecto, Habilidade, Manobra, Dom, Consequencia } from '@/types/ihunt';
 import { Upload, FileJson, AlertCircle, Check } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -10,28 +10,127 @@ interface SheetUploaderProps {
   currentSheet?: CharacterSheet;
 }
 
+// Mapeamento de IDs de manobras para nomes legíveis
+const MANEUVER_NAMES: Record<string, string> = {
+  'sabe-das-coisas': 'Sabe das Coisas',
+  'mestre-pesquisa': 'Mestre da Pesquisa',
+  'golpe-rasteiro': 'Golpe Rasteiro',
+  'embruxacao': 'Embruxação',
+  'all-access': 'Acesso Total',
+  'conhecimentos-ocultos': 'Conhecimentos Ocultos',
+  'contatos': 'Contatos',
+  'especialista': 'Especialista',
+  'faca-na-caveira': 'Faca na Caveira',
+  'mente-fria': 'Mente Fria',
+  'olhar-aguiado': 'Olhar Aguçado',
+  'pericia-tecnica': 'Perícia Técnica',
+  'resistencia': 'Resistência',
+  'sexto-sentido': 'Sexto Sentido',
+  'sombras': 'Sombras',
+  'tiro-certeiro': 'Tiro Certeiro',
+  'veterano': 'Veterano',
+};
+
 function parseIHuntJson(json: any): CharacterSheet {
-  // Handle the specific iHunt JSON format
+  // Parse aspects from English format
+  const aspectos: Aspecto[] = [];
+  if (json.aspects) {
+    if (json.aspects.highConcept) {
+      aspectos.push({ tipo: 'Conceito', descricao: json.aspects.highConcept });
+    }
+    if (json.aspects.drama) {
+      aspectos.push({ tipo: 'Drama', descricao: json.aspects.drama });
+    }
+    if (json.aspects.job) {
+      aspectos.push({ tipo: 'Trampo', descricao: json.aspects.job });
+    }
+    if (json.aspects.dreamBoard) {
+      aspectos.push({ tipo: 'Sonhos', descricao: json.aspects.dreamBoard });
+    }
+    if (json.aspects.free && Array.isArray(json.aspects.free)) {
+      json.aspects.free.forEach((free: string, i: number) => {
+        if (free) {
+          aspectos.push({ tipo: `Livre ${i + 1}`, descricao: free });
+        }
+      });
+    }
+  }
+
+  // Parse skills from object format {skillName: level}
+  const habilidades: Habilidade[] = [];
+  if (json.skills && typeof json.skills === 'object') {
+    Object.entries(json.skills).forEach(([nome, nivel]) => {
+      habilidades.push({ nome, nivel: nivel as number });
+    });
+  }
+
+  // Parse maneuvers from array of IDs
+  const manobras: Manobra[] = [];
+  if (json.maneuvers && Array.isArray(json.maneuvers)) {
+    json.maneuvers.forEach((id: string) => {
+      manobras.push({
+        id,
+        nome: MANEUVER_NAMES[id] || id.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+      });
+    });
+  }
+
+  // Parse skill maneuvers
+  const manobras_habilidade: Manobra[] = [];
+  if (json.skillManeuvers && Array.isArray(json.skillManeuvers)) {
+    json.skillManeuvers.forEach((id: string) => {
+      manobras_habilidade.push({
+        id,
+        nome: MANEUVER_NAMES[id] || id.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+      });
+    });
+  }
+
+  // Parse gifts
+  const dons: Dom[] = [];
+  if (json.gifts && Array.isArray(json.gifts)) {
+    json.gifts.forEach((gift: any) => {
+      dons.push({
+        id: gift.id || '',
+        nome: gift.name || gift.nome || '',
+        descricao: gift.description || gift.descricao || '',
+        categoria: gift.category || gift.categoria,
+        custo_essencia: gift.essenceCost || gift.custo_essencia,
+        nivel: gift.level || gift.nivel,
+      });
+    });
+  }
+
+  // Parse stress
+  const stress_fisico = json.stress?.physical || json.stress_fisico || [false, false, false];
+  const stress_mental = json.stress?.mental || json.stress_mental || [false, false, false];
+
+  // Parse consequences
+  const consequencias: Consequencia[] = [];
+  if (json.consequences) {
+    consequencias.push({ nivel: 'Suave (2)', descricao: json.consequences.mild || '' });
+    consequencias.push({ nivel: 'Moderada (4)', descricao: json.consequences.moderate || '' });
+    consequencias.push({ nivel: 'Grave (6)', descricao: json.consequences.severe || '' });
+  } else {
+    consequencias.push({ nivel: 'Suave (2)', descricao: '' });
+    consequencias.push({ nivel: 'Moderada (4)', descricao: '' });
+    consequencias.push({ nivel: 'Grave (6)', descricao: '' });
+  }
+
   return {
-    nome: json.nome || json.name || 'Personagem',
-    conceito: json.conceito || json.aspectos?.find((a: any) => a.tipo === 'Conceito')?.descricao,
-    drama: json.drama || json.aspectos?.find((a: any) => a.tipo === 'Drama')?.descricao,
-    trampo: json.trampo || json.aspectos?.find((a: any) => a.tipo === 'Trampo')?.descricao,
-    sonhos: json.sonhos || json.aspectos?.find((a: any) => a.tipo === 'Sonhos')?.descricao,
-    aspectos: json.aspectos || [],
-    habilidades: json.habilidades || [],
-    manobras: json.manobras || [],
-    stress_fisico: json.stress_fisico || json.stress?.fisico || [false, false, false, false],
-    stress_mental: json.stress_mental || json.stress?.mental || [false, false, false, false],
-    consequencias: json.consequencias || [
-      { nivel: 'Suave (2)', descricao: '' },
-      { nivel: 'Moderada (4)', descricao: '' },
-      { nivel: 'Grave (6)', descricao: '' },
-    ],
-    pontos_destino: json.pontos_destino ?? json.fate_points ?? 3,
-    pontos_destino_max: json.pontos_destino_max ?? json.fate_points_max ?? 3,
-    dons: json.dons || [],
-    notas: json.notas || json.notes || '',
+    nome: json.name || json.nome || 'Personagem',
+    drive: json.drive,
+    aspectos,
+    habilidades,
+    manobras,
+    manobras_habilidade,
+    stress_fisico,
+    stress_mental,
+    consequencias,
+    pontos_destino: json.fatePoints ?? json.pontos_destino ?? 3,
+    pontos_destino_max: json.refresh ?? json.pontos_destino_max ?? 3,
+    dons,
+    notas: json.notes || json.notas || '',
   };
 }
 
@@ -60,6 +159,7 @@ export function SheetUploader({ onUpload, currentSheet }: SheetUploaderProps) {
         description: `${sheet.nome} está pronto para a caçada.`,
       });
     } catch (e) {
+      console.error('Error parsing JSON:', e);
       setError('Erro ao ler o arquivo JSON. Verifique o formato.');
     }
   };
@@ -148,7 +248,7 @@ export function SheetUploader({ onUpload, currentSheet }: SheetUploaderProps) {
       <div className="text-xs text-muted-foreground space-y-1">
         <p className="flex items-center gap-1">
           <FileJson className="w-3 h-3" />
-          Formato esperado: JSON com campos de ficha iHunt
+          Formato esperado: JSON exportado do app iHunt
         </p>
       </div>
     </div>
