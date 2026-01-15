@@ -25,15 +25,17 @@ interface GameRoomProps {
   roomCode: string;
   password: string;
   playerName: string;
+  avatarUrl?: string;
   isMaster: boolean;
   onLeave: () => void;
 }
 
-export function GameRoom({ roomCode, password, playerName, isMaster, onLeave }: GameRoomProps) {
+export function GameRoom({ roomCode, password, playerName, avatarUrl, isMaster, onLeave }: GameRoomProps) {
   const { players, messages, pinnedScene, isConnected, playerId, sendMessage, sendRoll, updateSheet, updateScene } = useRoom(
     roomCode,
     playerName,
-    isMaster
+    isMaster,
+    avatarUrl
   );
   
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);

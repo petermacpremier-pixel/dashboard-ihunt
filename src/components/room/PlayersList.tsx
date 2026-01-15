@@ -1,5 +1,6 @@
 import { Player } from '@/types/ihunt';
 import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Crown, User, Circle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -27,16 +28,21 @@ export function PlayersList({ players, currentPlayerId, onSelectPlayer }: Player
             )}
           >
             <div className="relative">
-              <div className={cn(
-                'w-10 h-10 rounded-full flex items-center justify-center',
-                player.isMaster ? 'bg-warning/20' : 'bg-secondary'
+              <Avatar className={cn(
+                'w-10 h-10',
+                player.isMaster && 'ring-2 ring-warning'
               )}>
-                {player.isMaster ? (
-                  <Crown className="w-5 h-5 text-warning" />
-                ) : (
-                  <User className="w-5 h-5 text-muted-foreground" />
-                )}
-              </div>
+                <AvatarImage src={player.avatarUrl} alt={player.name} />
+                <AvatarFallback className={cn(
+                  player.isMaster ? 'bg-warning/20' : 'bg-secondary'
+                )}>
+                  {player.isMaster ? (
+                    <Crown className="w-5 h-5 text-warning" />
+                  ) : (
+                    <User className="w-5 h-5 text-muted-foreground" />
+                  )}
+                </AvatarFallback>
+              </Avatar>
               <Circle className="absolute -bottom-0.5 -right-0.5 w-3 h-3 fill-success text-success" />
             </div>
             
