@@ -120,6 +120,7 @@ function parseIHuntJson(json: any): CharacterSheet {
   return {
     nome: json.name || json.nome || 'Personagem',
     drive: json.drive,
+    avatarUrl: json.avatar || json.avatarUrl || '',
     aspectos,
     habilidades,
     manobras,

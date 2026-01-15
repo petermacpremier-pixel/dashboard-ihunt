@@ -17,7 +17,9 @@ import {
   FileText,
   Plus,
   Minus,
-  Target
+  Target,
+  ImageIcon,
+  User
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -62,11 +64,50 @@ export function CharacterSheetView({ sheet, isEditable, onUpdate }: CharacterShe
     updateSheet({ pontos_destino: newValue });
   };
 
+  const updateAvatarUrl = (avatarUrl: string) => {
+    if (!isEditable) return;
+    updateSheet({ avatarUrl });
+  };
+
   const sortedHabilidades = [...localSheet.habilidades].sort((a, b) => b.nivel - a.nivel);
 
   return (
     <ScrollArea className="h-full">
       <div className="p-4 space-y-4">
+        {/* Character Portrait */}
+        <div className="relative">
+          {localSheet.avatarUrl ? (
+            <div className="relative aspect-[3/4] w-full max-w-[200px] mx-auto rounded-lg overflow-hidden border border-border bg-muted">
+              <img 
+                src={localSheet.avatarUrl} 
+                alt={localSheet.nome}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = 'none';
+                }}
+              />
+            </div>
+          ) : (
+            <div className="aspect-[3/4] w-full max-w-[200px] mx-auto rounded-lg border border-dashed border-border bg-muted/30 flex items-center justify-center">
+              <User className="w-12 h-12 text-muted-foreground" />
+            </div>
+          )}
+          
+          {isEditable && (
+            <div className="mt-2 max-w-[200px] mx-auto">
+              <div className="relative">
+                <ImageIcon className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  value={localSheet.avatarUrl || ''}
+                  onChange={(e) => updateAvatarUrl(e.target.value)}
+                  placeholder="URL da imagem..."
+                  className="pl-8 h-8 text-xs"
+                />
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* Header */}
         <div className="text-center space-y-2">
           <h2 className="text-2xl font-bold text-primary">{localSheet.nome}</h2>

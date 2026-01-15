@@ -32,7 +32,7 @@ export function PlayersList({ players, currentPlayerId, onSelectPlayer }: Player
                 'w-10 h-10',
                 player.isMaster && 'ring-2 ring-warning'
               )}>
-                <AvatarImage src={player.avatarUrl} alt={player.name} />
+                <AvatarImage src={player.sheet?.avatarUrl} alt={player.name} />
                 <AvatarFallback className={cn(
                   player.isMaster ? 'bg-warning/20' : 'bg-secondary'
                 )}>

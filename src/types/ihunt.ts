@@ -32,6 +32,7 @@ export interface Dom {
 export interface CharacterSheet {
   nome: string;
   drive?: string;
+  avatarUrl?: string;
   aspectos: Aspecto[];
   habilidades: Habilidade[];
   manobras: Manobra[];
@@ -49,7 +50,6 @@ export interface CharacterSheet {
 export interface Player {
   id: string;
   name: string;
-  avatarUrl?: string;
   isMaster: boolean;
   sheet?: CharacterSheet;
   online_at: string;
