@@ -5,10 +5,10 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
-import { Skull, Users, Lock, User, Crown, ImageIcon } from 'lucide-react';
+import { Skull, Users, Lock, User, Crown } from 'lucide-react';
 
 interface JoinRoomProps {
-  onJoin: (roomCode: string, password: string, playerName: string, isMaster: boolean, avatarUrl?: string) => void;
+  onJoin: (roomCode: string, password: string, playerName: string, isMaster: boolean) => void;
 }
 
 function generateRoomCode(): string {
@@ -25,7 +25,6 @@ export function JoinRoom({ onJoin }: JoinRoomProps) {
     code: generateRoomCode(),
     password: '',
     playerName: '',
-    avatarUrl: '',
     isMaster: true,
   });
 
@@ -33,21 +32,20 @@ export function JoinRoom({ onJoin }: JoinRoomProps) {
     code: '',
     password: '',
     playerName: '',
-    avatarUrl: '',
     isMaster: false,
   });
 
   const handleCreate = (e: React.FormEvent) => {
     e.preventDefault();
     if (createRoom.password && createRoom.playerName) {
-      onJoin(createRoom.code, createRoom.password, createRoom.playerName, createRoom.isMaster, createRoom.avatarUrl || undefined);
+      onJoin(createRoom.code, createRoom.password, createRoom.playerName, createRoom.isMaster);
     }
   };
 
   const handleJoin = (e: React.FormEvent) => {
     e.preventDefault();
     if (joinRoom.code && joinRoom.password && joinRoom.playerName) {
-      onJoin(joinRoom.code.toUpperCase(), joinRoom.password, joinRoom.playerName, joinRoom.isMaster, joinRoom.avatarUrl || undefined);
+      onJoin(joinRoom.code.toUpperCase(), joinRoom.password, joinRoom.playerName, joinRoom.isMaster);
     }
   };
 
@@ -94,21 +92,6 @@ export function JoinRoom({ onJoin }: JoinRoomProps) {
                       value={createRoom.playerName}
                       onChange={(e) => setCreateRoom({ ...createRoom, playerName: e.target.value })}
                       required
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="create-avatar">URL da sua foto (opcional)</Label>
-                  <div className="relative">
-                    <ImageIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      id="create-avatar"
-                      type="url"
-                      placeholder="https://..."
-                      className="pl-10"
-                      value={createRoom.avatarUrl}
-                      onChange={(e) => setCreateRoom({ ...createRoom, avatarUrl: e.target.value })}
                     />
                   </div>
                 </div>
@@ -167,21 +150,6 @@ export function JoinRoom({ onJoin }: JoinRoomProps) {
                       value={joinRoom.playerName}
                       onChange={(e) => setJoinRoom({ ...joinRoom, playerName: e.target.value })}
                       required
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="join-avatar">URL da sua foto (opcional)</Label>
-                  <div className="relative">
-                    <ImageIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      id="join-avatar"
-                      type="url"
-                      placeholder="https://..."
-                      className="pl-10"
-                      value={joinRoom.avatarUrl}
-                      onChange={(e) => setJoinRoom({ ...joinRoom, avatarUrl: e.target.value })}
                     />
                   </div>
                 </div>

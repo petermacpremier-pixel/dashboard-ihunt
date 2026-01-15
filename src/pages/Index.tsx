@@ -7,7 +7,6 @@ interface RoomSession {
   roomCode: string;
   password: string;
   playerName: string;
-  avatarUrl?: string;
   isMaster: boolean;
   playerId: string;
 }
@@ -27,9 +26,9 @@ const Index = () => {
     setIsLoading(false);
   }, []);
 
-  const handleJoin = (roomCode: string, password: string, playerName: string, isMaster: boolean, avatarUrl?: string) => {
+  const handleJoin = (roomCode: string, password: string, playerName: string, isMaster: boolean) => {
     const playerId = crypto.randomUUID();
-    const newSession: RoomSession = { roomCode, password, playerName, avatarUrl, isMaster, playerId };
+    const newSession: RoomSession = { roomCode, password, playerName, isMaster, playerId };
     setStoredValue(SESSION_KEY, newSession);
     setSession(newSession);
   };
@@ -58,7 +57,6 @@ const Index = () => {
         roomCode={session.roomCode}
         password={session.password}
         playerName={session.playerName}
-        avatarUrl={session.avatarUrl}
         isMaster={session.isMaster}
         onLeave={handleLeave}
       />

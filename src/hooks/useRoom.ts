@@ -15,7 +15,7 @@ const getMessagesKey = (roomCode: string) => `ihunt_messages_${roomCode}`;
 const getSceneKey = (roomCode: string) => `ihunt_scene_${roomCode}`;
 const getSheetKey = (playerId: string) => `ihunt_sheet_${playerId}`;
 
-export function useRoom(roomCode: string, playerName: string, isMaster: boolean, avatarUrl?: string) {
+export function useRoom(roomCode: string, playerName: string, isMaster: boolean) {
   // Try to get persisted data
   const [state, setState] = useState<RoomState>(() => ({
     players: [],
@@ -69,7 +69,6 @@ export function useRoom(roomCode: string, playerName: string, isMaster: boolean,
       const players: Player[] = Object.values(presenceState).flat().map((p: any) => ({
         id: p.id,
         name: p.name,
-        avatarUrl: p.avatarUrl,
         isMaster: p.isMaster,
         sheet: p.sheet,
         online_at: p.online_at,
@@ -121,7 +120,6 @@ export function useRoom(roomCode: string, playerName: string, isMaster: boolean,
         await channel.track({
           id: playerIdRef.current,
           name: playerName,
-          avatarUrl,
           isMaster,
           sheet: persistedSheet,
           online_at: new Date().toISOString(),
@@ -159,7 +157,7 @@ export function useRoom(roomCode: string, playerName: string, isMaster: boolean,
       });
       supabase.removeChannel(channel);
     };
-  }, [roomCode, playerName, isMaster, avatarUrl]);
+  }, [roomCode, playerName, isMaster]);
 
   const sendMessage = useCallback((content: string) => {
     if (!channelRef.current) return;
@@ -211,7 +209,6 @@ export function useRoom(roomCode: string, playerName: string, isMaster: boolean,
     channelRef.current.track({
       id: playerIdRef.current,
       name: playerName,
-      avatarUrl,
       isMaster,
       sheet,
       online_at: new Date().toISOString(),
@@ -226,7 +223,7 @@ export function useRoom(roomCode: string, playerName: string, isMaster: boolean,
         sheet,
       },
     });
-  }, [playerName, isMaster, avatarUrl]);
+  }, [playerName, isMaster]);
 
   const updateScene = useCallback((scene: SceneInfo | null) => {
     if (!channelRef.current) return;
