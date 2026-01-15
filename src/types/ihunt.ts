@@ -49,6 +49,7 @@ export interface CharacterSheet {
 export interface Player {
   id: string;
   name: string;
+  avatarUrl?: string;
   isMaster: boolean;
   sheet?: CharacterSheet;
   online_at: string;

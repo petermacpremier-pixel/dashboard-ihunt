@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Player, ChatMessage, CharacterSheet, DiceRollResult, SceneInfo } from '@/types/ihunt';
+import { setStoredValue, getStoredValue } from './useLocalStorage';
 
 interface RoomState {
   players: Player[];
@@ -9,16 +10,42 @@ interface RoomState {
   isConnected: boolean;
 }
 
-export function useRoom(roomCode: string, playerName: string, isMaster: boolean) {
-  const [state, setState] = useState<RoomState>({
+// Storage keys
+const getMessagesKey = (roomCode: string) => `ihunt_messages_${roomCode}`;
+const getSceneKey = (roomCode: string) => `ihunt_scene_${roomCode}`;
+const getSheetKey = (playerId: string) => `ihunt_sheet_${playerId}`;
+
+export function useRoom(roomCode: string, playerName: string, isMaster: boolean, avatarUrl?: string) {
+  // Try to get persisted data
+  const [state, setState] = useState<RoomState>(() => ({
     players: [],
-    messages: [],
-    pinnedScene: null,
+    messages: getStoredValue<ChatMessage[]>(getMessagesKey(roomCode)) || [],
+    pinnedScene: getStoredValue<SceneInfo>(getSceneKey(roomCode)),
     isConnected: false,
-  });
+  }));
   
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
-  const playerIdRef = useRef<string>(crypto.randomUUID());
+  
+  // Get or create playerId
+  const playerIdRef = useRef<string>('');
+  if (!playerIdRef.current) {
+    const session = getStoredValue<{ playerId: string }>('ihunt_session');
+    playerIdRef.current = session?.playerId || crypto.randomUUID();
+  }
+
+  // Persist messages when they change
+  useEffect(() => {
+    if (state.messages.length > 0) {
+      setStoredValue(getMessagesKey(roomCode), state.messages);
+    }
+  }, [state.messages, roomCode]);
+
+  // Persist scene when it changes
+  useEffect(() => {
+    if (state.pinnedScene) {
+      setStoredValue(getSceneKey(roomCode), state.pinnedScene);
+    }
+  }, [state.pinnedScene, roomCode]);
 
   useEffect(() => {
     if (!roomCode || !playerName) return;
@@ -42,6 +69,7 @@ export function useRoom(roomCode: string, playerName: string, isMaster: boolean)
       const players: Player[] = Object.values(presenceState).flat().map((p: any) => ({
         id: p.id,
         name: p.name,
+        avatarUrl: p.avatarUrl,
         isMaster: p.isMaster,
         sheet: p.sheet,
         online_at: p.online_at,
@@ -52,10 +80,16 @@ export function useRoom(roomCode: string, playerName: string, isMaster: boolean)
     // Handle broadcast messages
     channel.on('broadcast', { event: 'chat' }, ({ payload }) => {
       const message = payload as ChatMessage;
-      setState(prev => ({
-        ...prev,
-        messages: [...prev.messages, message],
-      }));
+      setState(prev => {
+        // Avoid duplicates
+        if (prev.messages.some(m => m.id === message.id)) {
+          return prev;
+        }
+        return {
+          ...prev,
+          messages: [...prev.messages, message],
+        };
+      });
     });
 
     // Handle sheet updates
@@ -78,14 +112,18 @@ export function useRoom(roomCode: string, playerName: string, isMaster: boolean)
       }));
     });
 
+    // Get persisted sheet if any
+    const persistedSheet = getStoredValue<CharacterSheet>(getSheetKey(playerIdRef.current));
+
     // Subscribe and track presence
     channel.subscribe(async (status) => {
       if (status === 'SUBSCRIBED') {
         await channel.track({
           id: playerIdRef.current,
           name: playerName,
+          avatarUrl,
           isMaster,
-          sheet: null,
+          sheet: persistedSheet,
           online_at: new Date().toISOString(),
         });
         setState(prev => ({ ...prev, isConnected: true }));
@@ -121,7 +159,7 @@ export function useRoom(roomCode: string, playerName: string, isMaster: boolean)
       });
       supabase.removeChannel(channel);
     };
-  }, [roomCode, playerName, isMaster]);
+  }, [roomCode, playerName, isMaster, avatarUrl]);
 
   const sendMessage = useCallback((content: string) => {
     if (!channelRef.current) return;
@@ -166,10 +204,14 @@ export function useRoom(roomCode: string, playerName: string, isMaster: boolean)
   const updateSheet = useCallback((sheet: CharacterSheet) => {
     if (!channelRef.current) return;
 
+    // Persist sheet to localStorage
+    setStoredValue(getSheetKey(playerIdRef.current), sheet);
+
     // Update presence with new sheet
     channelRef.current.track({
       id: playerIdRef.current,
       name: playerName,
+      avatarUrl,
       isMaster,
       sheet,
       online_at: new Date().toISOString(),
@@ -184,7 +226,7 @@ export function useRoom(roomCode: string, playerName: string, isMaster: boolean)
         sheet,
       },
     });
-  }, [playerName, isMaster]);
+  }, [playerName, isMaster, avatarUrl]);
 
   const updateScene = useCallback((scene: SceneInfo | null) => {
     if (!channelRef.current) return;

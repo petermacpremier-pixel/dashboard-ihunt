@@ -4,9 +4,11 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ChatMessage, DiceRollResult, SceneInfo } from '@/types/ihunt';
 import { PinnedScene } from './PinnedScene';
-import { Send, Dice1, Plus, Minus, Zap, EyeOff } from 'lucide-react';
+import { DifficultyTable } from './DifficultyTable';
+import { Send, Dice1, Plus, Minus, Zap, EyeOff, HelpCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface ChatPanelProps {
@@ -265,7 +267,7 @@ export function ChatPanel({ messages, currentPlayerId, currentPlayerName, pinned
           </div>
 
           <div className="flex items-center justify-between">
-            <div className="flex gap-1 flex-wrap">
+            <div className="flex gap-1 flex-wrap items-center">
               <Button
                 variant="default"
                 size="sm"
@@ -275,6 +277,16 @@ export function ChatPanel({ messages, currentPlayerId, currentPlayerName, pinned
                 <Dice1 className="w-4 h-4" />
                 4dF
               </Button>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="ghost" size="sm" className="px-1.5">
+                    <HelpCircle className="w-4 h-4" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent side="top" className="w-auto p-2">
+                  <DifficultyTable />
+                </PopoverContent>
+              </Popover>
               <Button
                 variant="default"
                 size="sm"
